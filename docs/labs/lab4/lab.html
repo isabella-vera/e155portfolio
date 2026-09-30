@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Isabella Vera">
 
-<title>lab – Isabella Vera</title>
+<title>Lab 4 - Digital Audio – Isabella Vera</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -133,13 +134,71 @@ ul.task-list li input[type="checkbox"] {
 <!-- margin-sidebar -->
     
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Lab 4 - Digital Audio</h1>
+</div>
 
 
 
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Isabella Vera </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
 
 
+</header>
 
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>In this lab I will use the MCU to play music by using timers to generate square waves and toggling a GPIO pin at a specific frequency for specified durations.</p>
+</section>
+<section id="technical-documentation" class="level2">
+<h2 class="anchored" data-anchor-id="technical-documentation">Technical Documentation</h2>
+<p>The source code for the project can be found in the associated <a href="https://github.com/isabella-vera/E155/tree/main/Lab4">Github repository</a></p>
+<section id="schematic" class="level3">
+<h3 class="anchored" data-anchor-id="schematic">Schematic</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/lab4schematic.jpeg" class="img-fluid figure-img"></p>
+<figcaption>Schematic of the Design</figcaption>
+</figure>
+</div>
+</section>
+<section id="calculations" class="level3">
+<h3 class="anchored" data-anchor-id="calculations">Calculations</h3>
+<p>A timer is a counter that ticks up at a steady rate, and when it reaches a set limit it goes back to zero. Each wrap is one “cycle.” The prescaler and auto-reload value together determine how fast that happens. The prescaler slows the incoming 80 MHz clock down, so the counter only ticks once every so many clock pulses. The auto-reload value sets how many ticks the counter counts before wrapping.</p>
+<p>For note duration I used TIM15. I set the prescaler to 79, so the counter ticks once every 80 clock pulses, which is 1 million ticks per second, or one tick per microsecond. I set the auto-reloadlimit to 999, so the counter counts 1000 ticks (1000 microseconds or 1 millisecond) and before resetting to zero.</p>
+<p>delay_ms just waits for the timer to announce a wrap and counts them. A 125 ms note means waiting for 125 wraps. So note length in milliseconds equals the number of wraps you wait for.</p>
+<p>To get the the pitches I usedTIM16. The timer generates a square wave (PWM) to produce the sound. The output pin is high for the first half of each cycle and low for the second half, which makes a square wave. The pitch that you hear is how many of these cycles happen per second.</p>
+<p><img src="images/calcs.jpeg" class="img-fluid" alt="Minimum and Maximum Calculations"> <img src="images/table.png" class="img-fluid" alt="Frequency Verification"></p>
+<p>Checking at 220 Hz and 1000 Hz is not sufficient to prove that all notes are within error bounds. This is because most of the error comes from the fact that the prescaler and auto-reload values are integers, and desired frequencies are not all exactly integers.</p>
+</section>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>I spent about twelve hours working on this lab.</p>
+</section>
+<section id="ai-prototype-summary" class="level2">
+<h2 class="anchored" data-anchor-id="ai-prototype-summary">AI Prototype Summary</h2>
+<p>I asked Gemini “What timers should I use on the STM32L432KC to generate frequencies ranging from 220Hz to 1kHz? What’s the best choice of timer if I want to easily connect it to a GPIO pin? What formulae are relevant, and what registers need to be set to configure them properly?”</p>
+<p>It gave the following response: “To generate audio frequencies from 220Hz (A3 note) to 1kHz on the STM32L432KC (commonly found on the Nucleo-32 board), general-purpose timers TIM2, TIM15, or TIM16 are ideal choices.”</p>
+<p>It also provided guidance on why these timers are suitable with governing calculations for frequency. I used TIM15 and TIM16, but I was surprised that these were the ones recommended since the I heard more often that using TIM6 and TIM7 was more efficient for this lab. I think AI can be helpful to guide the selection of timers as it can quickly synthesize information that is otherwise scattered across datasheets and reference manuals.</p>
+
+
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
