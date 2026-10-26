@@ -15,7 +15,7 @@ The source code for the project can be found in the associated [Github repositor
 {{< pdf file="assets/waves.pdf" height="500px" >}}
 
 ## Logic Analyzer
-![Logic Analyzer](images/logic_analyzer.jpeg)
+![Logic Analyzer](images/oscope.jpeg)
 
 ## Conclusion
 My design works as expected! I spent about 20-25 hours on this lab.
