@@ -249,14 +249,21 @@
     "href": "labs/lab7/lab.html",
     "title": "Lab 7 - Advanced Encryption Standard",
     "section": "",
-    "text": "For Lab 7, I constructed a hardware accelerator to perform 128-bit AES encryption. I set up a SPI interface to send a plaintext message and key from my MCU to the accelerator and verify that the cyphertext received back is correct. ## Technical Documentation The source code for the project can be found in the associated Github repository"
+    "text": "For Lab 7, I constructed a hardware accelerator to perform 128-bit AES encryption. I set up a SPI interface to send a plaintext message and key from my MCU to the accelerator and verify that the cyphertext received back is correct."
   },
   {
     "objectID": "labs/lab7/lab.html#introduction",
     "href": "labs/lab7/lab.html#introduction",
     "title": "Lab 7 - Advanced Encryption Standard",
     "section": "",
-    "text": "For Lab 7, I constructed a hardware accelerator to perform 128-bit AES encryption. I set up a SPI interface to send a plaintext message and key from my MCU to the accelerator and verify that the cyphertext received back is correct. ## Technical Documentation The source code for the project can be found in the associated Github repository"
+    "text": "For Lab 7, I constructed a hardware accelerator to perform 128-bit AES encryption. I set up a SPI interface to send a plaintext message and key from my MCU to the accelerator and verify that the cyphertext received back is correct."
+  },
+  {
+    "objectID": "labs/lab7/lab.html#technical-documentation",
+    "href": "labs/lab7/lab.html#technical-documentation",
+    "title": "Lab 7 - Advanced Encryption Standard",
+    "section": "Technical Documentation",
+    "text": "Technical Documentation\nThe source code for the project can be found in the associated Github repository"
   },
   {
     "objectID": "labs/lab7/lab.html#block-diagrams",

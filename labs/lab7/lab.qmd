@@ -4,6 +4,7 @@ author: Isabella Vera
 ---
 ## Introduction
 For Lab 7, I constructed a hardware accelerator to perform 128-bit AES encryption. I set up a SPI interface to send a plaintext message and key from my MCU to the accelerator and verify that the cyphertext received back is correct. 
+
 ## Technical Documentation
 The source code for the project can be found in the associated [Github repository](https://github.com/isabella-vera/E155/tree/main/Lab7)
 
