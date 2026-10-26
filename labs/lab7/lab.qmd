@@ -1,0 +1,184 @@
+---
+title: Lab 7 - Advanced Encryption Standard
+author: Isabella Vera
+---
+## Introduction
+For Lab 7, I constructed a hardware accelerator to perform 128-bit AES encryption. I set up a SPI interface to send a plaintext message and key from my MCU to the accelerator and verify that the cyphertext received back is correct. 
+## Technical Documentation
+The source code for the project can be found in the associated [Github repository](https://github.com/isabella-vera/E155/tree/main/Lab7)
+
+## Block Diagrams
+{{< pdf file="assets/blockdiagrams.pdf" height="500px" >}}
+
+## Waveforms
+{{< pdf file="assets/waves.pdf" height="500px" >}}
+
+## Logic Analyzer
+![Logic Analyzer](images/logic_analyzer.jpeg)
+
+## Conclusion
+My design works as expected! I spent about 20-25 hours on this lab.
+
+## AI Prototype Summary
+I completed the AI prototype using Gemini and the two given prompts.
+
+Here is the code I got when I uploaded the file:
+```
+module aes_key_expansion (
+    input  logic [127:0] prev_key,   // Previous key / initial key [w0, w1, w2, w3]
+    input  logic [3:0]   rcon_idx,   // Round constant index (1 to 10 for AES-128)
+    output logic [127:0] next_key    // Calculated round key [w4, w5, w6, w7]
+);
+
+    // Break the input key into 4 32-bit words
+    logic [31:0] w0, w1, w2, w3;
+    assign {w0, w1, w2, w3} = prev_key;
+
+    // Temporary variables for word operations
+    logic [31:0] rot_w3;
+    logic [31:0] sub_w3;
+    logic [31:0] rcon_w;
+    logic [31:0] temp;
+
+    // Output key words
+    logic [31:0] w4, w5, w6, w7;
+
+    // Function to calculate Rcon[j] byte based on round index (Section 5.2 / Table 5)
+    function automatic logic [7:0] get_rcon(input logic [3:0] idx);
+        case (idx)
+            4'd1:  get_rcon = 8'h01;
+            4'd2:  get_rcon = 8'h02;
+            4'd3:  get_rcon = 8'h04;
+            4'd4:  get_rcon = 8'h08;
+            4'd5:  get_rcon = 8'h10;
+            4'd6:  get_rcon = 8'h20;
+            4'd7:  get_rcon = 8'h40;
+            4'd8:  get_rcon = 8'h80;
+            4 me9:  get_rcon = 8'h1B;
+            4'd10: get_rcon = 8'h36;
+            default: get_rcon = 8'h00;
+        endcase
+    endfunction
+
+    // Instantiate existing RotWord module: RotWord([a0, a1, a2, a3]) = [a1, a2, a3, a0]
+    RotWord rot_inst (
+        .in  (w3),
+        .out (rot_w3)
+    );
+
+    // Instantiate existing SubWord module: Applies S-box to each of the 4 bytes
+    SubWord sub_inst (
+        .in  (rot_w3),
+        .out (sub_w3)
+    );
+
+    // Rcon word is formed as [Rcon[i/Nk], 00, 00, 00]
+    assign rcon_w = {get_rcon(rcon_idx), 24'h000000};
+
+    // temp = SubWord(RotWord(w[i-1])) ^ Rcon[i/Nk]
+    assign temp = sub_w3 ^ rcon_w;
+
+    // Calculate the 4 output key words recursively
+    assign w4 = w0 ^ temp;
+    assign w5 = w1 ^ w4;
+    assign w6 = w2 ^ w5;
+    assign w7 = w3 ^ w6;
+
+    // Output the newly expanded 128-bit key
+    assign next_key = {w4, w5, w6, w7};
+
+endmodule
+
+```
+
+Without the upload, I got this:
+```
+module key_expansion #(
+    parameter int Nk = 4,  // Number of 32-bit words in the key (e.g., 4, 6, 8)
+    parameter int Nr = 10  // Number of rounds (e.g., 10, 12, 14)
+)(
+    input  logic [32*Nk-1:0]      key,
+    input  logic [31:0]           Rcon [0:4*Nr+3], // Rcon array indexed by word
+    output logic [31:0]           w    [0:4*Nr+3]
+);
+
+    // Dynamic length based on Nr: Total words needed = 4 * Nr + 4
+    localparam int TOTAL_WORDS = 4 * Nr + 4;
+
+    // Temporary signals for module outputs and processed temp values
+    logic [31:0] mod2_out [Nk:TOTAL_WORDS-1];
+    logic [31:0] mod1_out [Nk:TOTAL_WORDS-1];
+    logic [31:0] temp     [Nk:TOTAL_WORDS-1];
+
+    // =========================================================================
+    // 1. Initial key loading (i = 0 to Nk - 1)
+    // =========================================================================
+    genvar i;
+    generate
+        for (i = 0; i < Nk; i++) begin : gen_initial_key
+            // Slice key from key[4*i .. 4*i+3] (4 bytes = 32 bits per word)
+            // Big-endian index ordering: key[4*i +: 4]
+            assign w[i] = {key[8*(4*i+3) +: 8], 
+                           key[8*(4*i+2) +: 8], 
+                           key[8*(4*i+1) +: 8], 
+                           key[8*(4*i)   +: 8]};
+        end
+    endgenerate
+
+    // =========================================================================
+    // 2. Main key expansion loop (i = Nk to 4*Nr + 3)
+    // =========================================================================
+    generate
+        for (i = Nk; i < TOTAL_WORDS; i++) begin : gen_key_expansion
+
+            // -----------------------------------------------------------------
+            // Condition 1: i mod Nk == 0
+            // -----------------------------------------------------------------
+            if (i % Nk == 0) begin : cond_mod_nk_zero
+                module2 u_module2 (
+                    .in  (w[i-1]),
+                    .out (mod2_out[i])
+                );
+
+                module1 u_module1 (
+                    .in  (mod2_out[i]),
+                    .out (mod1_out[i])
+                );
+
+                // temp = module1(module2(w[i-1])) ^ Rcon[i/Nk]
+                assign temp[i] = mod1_out[i] ^ Rcon[i / Nk];
+            end
+
+            // -----------------------------------------------------------------
+            // Condition 2: Nk > 6 and i mod Nk == 4
+            // -----------------------------------------------------------------
+            else if ((Nk > 6) && (i % Nk == 4)) begin : cond_mod_nk_four
+                module1 u_module1 (
+                    .in  (w[i-1]),
+                    .out (mod1_out[i])
+                );
+
+                // temp = module1(w[i-1])
+                assign temp[i] = mod1_out[i];
+            end
+
+            // -----------------------------------------------------------------
+            // Default Condition: Neither of the above
+            // -----------------------------------------------------------------
+            else begin : cond_default
+                // temp = w[i-1]
+                assign temp[i] = w[i-1];
+            end
+
+            // -----------------------------------------------------------------
+            // Word output calculation: w[i] = w[i-Nk] ^ temp
+            // -----------------------------------------------------------------
+            assign w[i] = w[i-Nk] ^ temp[i];
+
+        end
+    endgenerate
+
+endmodule
+```
+
+I was surprised that even when I said not to use any knowledge of the AES standard, the second output still recognized the keyexpansion logic and called the module key_expansion.

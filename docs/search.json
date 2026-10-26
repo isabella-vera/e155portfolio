@@ -245,6 +245,55 @@
     "text": "AI Prototype Summary\nI asked Gemini: “Write me interrupt handlers to interface with a quadrature encoder. I’m using the STM32L432KC, what pins should I connect the encoder to in order to allow it to easily trigger the interrupts?”\nIt responded with “When interfacing a quadrature encoder with an STM32 micro, the most efficient approach is not to manually trigger GPIO interrupts (EXTI). Manual EXTI interrupts burn significant CPU cycles and risk missing steps at higher RPMs.\nInstead, the STM32 contains dedicated hardware peripheral timer channels in Encoder Mode. The timer listens directly to channels TIMx_CH1 and TIMx_CH2, automatically decoding x2 or x4 quadrature signals and driving a hardware 16-bit or 32-bit counter up or down on its own without any CPU overhead.”\nIt gave me the choice to use Modern STM32 HAL Implementation (Hardware Encoder Mode) or Manual EXTI Interrupt Handlers, recommending the former for efficiency and reliability. I selected the first option as it recommended, and it gave me some weird things to set up I hadn’t really done before."
   },
   {
+    "objectID": "labs/lab7/lab.html",
+    "href": "labs/lab7/lab.html",
+    "title": "Lab 7 - Advanced Encryption Standard",
+    "section": "",
+    "text": "For Lab 7, I constructed a hardware accelerator to perform 128-bit AES encryption. I set up a SPI interface to send a plaintext message and key from my MCU to the accelerator and verify that the cyphertext received back is correct. ## Technical Documentation The source code for the project can be found in the associated Github repository"
+  },
+  {
+    "objectID": "labs/lab7/lab.html#introduction",
+    "href": "labs/lab7/lab.html#introduction",
+    "title": "Lab 7 - Advanced Encryption Standard",
+    "section": "",
+    "text": "For Lab 7, I constructed a hardware accelerator to perform 128-bit AES encryption. I set up a SPI interface to send a plaintext message and key from my MCU to the accelerator and verify that the cyphertext received back is correct. ## Technical Documentation The source code for the project can be found in the associated Github repository"
+  },
+  {
+    "objectID": "labs/lab7/lab.html#block-diagrams",
+    "href": "labs/lab7/lab.html#block-diagrams",
+    "title": "Lab 7 - Advanced Encryption Standard",
+    "section": "Block Diagrams",
+    "text": "Block Diagrams\n  Download PDF File\n   \n    Unable to display PDF file. Download instead."
+  },
+  {
+    "objectID": "labs/lab7/lab.html#waveforms",
+    "href": "labs/lab7/lab.html#waveforms",
+    "title": "Lab 7 - Advanced Encryption Standard",
+    "section": "Waveforms",
+    "text": "Waveforms\n  Download PDF File\n   \n    Unable to display PDF file. Download instead."
+  },
+  {
+    "objectID": "labs/lab7/lab.html#logic-analyzer",
+    "href": "labs/lab7/lab.html#logic-analyzer",
+    "title": "Lab 7 - Advanced Encryption Standard",
+    "section": "Logic Analyzer",
+    "text": "Logic Analyzer\n\n\n\nLogic Analyzer"
+  },
+  {
+    "objectID": "labs/lab7/lab.html#conclusion",
+    "href": "labs/lab7/lab.html#conclusion",
+    "title": "Lab 7 - Advanced Encryption Standard",
+    "section": "Conclusion",
+    "text": "Conclusion\nMy design works as expected! I spent about 20-25 hours on this lab."
+  },
+  {
+    "objectID": "labs/lab7/lab.html#ai-prototype-summary",
+    "href": "labs/lab7/lab.html#ai-prototype-summary",
+    "title": "Lab 7 - Advanced Encryption Standard",
+    "section": "AI Prototype Summary",
+    "text": "AI Prototype Summary\nI completed the AI prototype using Gemini and the two given prompts.\nHere is the code I got when I uploaded the file:\nmodule aes_key_expansion (\n    input  logic [127:0] prev_key,   // Previous key / initial key [w0, w1, w2, w3]\n    input  logic [3:0]   rcon_idx,   // Round constant index (1 to 10 for AES-128)\n    output logic [127:0] next_key    // Calculated round key [w4, w5, w6, w7]\n);\n\n    // Break the input key into 4 32-bit words\n    logic [31:0] w0, w1, w2, w3;\n    assign {w0, w1, w2, w3} = prev_key;\n\n    // Temporary variables for word operations\n    logic [31:0] rot_w3;\n    logic [31:0] sub_w3;\n    logic [31:0] rcon_w;\n    logic [31:0] temp;\n\n    // Output key words\n    logic [31:0] w4, w5, w6, w7;\n\n    // Function to calculate Rcon[j] byte based on round index (Section 5.2 / Table 5)\n    function automatic logic [7:0] get_rcon(input logic [3:0] idx);\n        case (idx)\n            4'd1:  get_rcon = 8'h01;\n            4'd2:  get_rcon = 8'h02;\n            4'd3:  get_rcon = 8'h04;\n            4'd4:  get_rcon = 8'h08;\n            4'd5:  get_rcon = 8'h10;\n            4'd6:  get_rcon = 8'h20;\n            4'd7:  get_rcon = 8'h40;\n            4'd8:  get_rcon = 8'h80;\n            4 me9:  get_rcon = 8'h1B;\n            4'd10: get_rcon = 8'h36;\n            default: get_rcon = 8'h00;\n        endcase\n    endfunction\n\n    // Instantiate existing RotWord module: RotWord([a0, a1, a2, a3]) = [a1, a2, a3, a0]\n    RotWord rot_inst (\n        .in  (w3),\n        .out (rot_w3)\n    );\n\n    // Instantiate existing SubWord module: Applies S-box to each of the 4 bytes\n    SubWord sub_inst (\n        .in  (rot_w3),\n        .out (sub_w3)\n    );\n\n    // Rcon word is formed as [Rcon[i/Nk], 00, 00, 00]\n    assign rcon_w = {get_rcon(rcon_idx), 24'h000000};\n\n    // temp = SubWord(RotWord(w[i-1])) ^ Rcon[i/Nk]\n    assign temp = sub_w3 ^ rcon_w;\n\n    // Calculate the 4 output key words recursively\n    assign w4 = w0 ^ temp;\n    assign w5 = w1 ^ w4;\n    assign w6 = w2 ^ w5;\n    assign w7 = w3 ^ w6;\n\n    // Output the newly expanded 128-bit key\n    assign next_key = {w4, w5, w6, w7};\n\nendmodule\n\nWithout the upload, I got this:\nmodule key_expansion #(\n    parameter int Nk = 4,  // Number of 32-bit words in the key (e.g., 4, 6, 8)\n    parameter int Nr = 10  // Number of rounds (e.g., 10, 12, 14)\n)(\n    input  logic [32*Nk-1:0]      key,\n    input  logic [31:0]           Rcon [0:4*Nr+3], // Rcon array indexed by word\n    output logic [31:0]           w    [0:4*Nr+3]\n);\n\n    // Dynamic length based on Nr: Total words needed = 4 * Nr + 4\n    localparam int TOTAL_WORDS = 4 * Nr + 4;\n\n    // Temporary signals for module outputs and processed temp values\n    logic [31:0] mod2_out [Nk:TOTAL_WORDS-1];\n    logic [31:0] mod1_out [Nk:TOTAL_WORDS-1];\n    logic [31:0] temp     [Nk:TOTAL_WORDS-1];\n\n    // =========================================================================\n    // 1. Initial key loading (i = 0 to Nk - 1)\n    // =========================================================================\n    genvar i;\n    generate\n        for (i = 0; i &lt; Nk; i++) begin : gen_initial_key\n            // Slice key from key[4*i .. 4*i+3] (4 bytes = 32 bits per word)\n            // Big-endian index ordering: key[4*i +: 4]\n            assign w[i] = {key[8*(4*i+3) +: 8], \n                           key[8*(4*i+2) +: 8], \n                           key[8*(4*i+1) +: 8], \n                           key[8*(4*i)   +: 8]};\n        end\n    endgenerate\n\n    // =========================================================================\n    // 2. Main key expansion loop (i = Nk to 4*Nr + 3)\n    // =========================================================================\n    generate\n        for (i = Nk; i &lt; TOTAL_WORDS; i++) begin : gen_key_expansion\n\n            // -----------------------------------------------------------------\n            // Condition 1: i mod Nk == 0\n            // -----------------------------------------------------------------\n            if (i % Nk == 0) begin : cond_mod_nk_zero\n                module2 u_module2 (\n                    .in  (w[i-1]),\n                    .out (mod2_out[i])\n                );\n\n                module1 u_module1 (\n                    .in  (mod2_out[i]),\n                    .out (mod1_out[i])\n                );\n\n                // temp = module1(module2(w[i-1])) ^ Rcon[i/Nk]\n                assign temp[i] = mod1_out[i] ^ Rcon[i / Nk];\n            end\n\n            // -----------------------------------------------------------------\n            // Condition 2: Nk &gt; 6 and i mod Nk == 4\n            // -----------------------------------------------------------------\n            else if ((Nk &gt; 6) && (i % Nk == 4)) begin : cond_mod_nk_four\n                module1 u_module1 (\n                    .in  (w[i-1]),\n                    .out (mod1_out[i])\n                );\n\n                // temp = module1(w[i-1])\n                assign temp[i] = mod1_out[i];\n            end\n\n            // -----------------------------------------------------------------\n            // Default Condition: Neither of the above\n            // -----------------------------------------------------------------\n            else begin : cond_default\n                // temp = w[i-1]\n                assign temp[i] = w[i-1];\n            end\n\n            // -----------------------------------------------------------------\n            // Word output calculation: w[i] = w[i-Nk] ^ temp\n            // -----------------------------------------------------------------\n            assign w[i] = w[i-Nk] ^ temp[i];\n\n        end\n    endgenerate\n\nendmodule\nI was surprised that even when I said not to use any knowledge of the AES standard, the second output still recognized the keyexpansion logic and called the module key_expansion."
+  },
+  {
     "objectID": "posts/first-post.html",
     "href": "posts/first-post.html",
     "title": "Start of Semester Reflections",
